@@ -15,5 +15,5 @@
 
 ## Design
 * simple and inuitive interface
-* Colors: white, dark green, light green, black
+* Colors: white, dark blue, light blue, black
 * responsive design 
