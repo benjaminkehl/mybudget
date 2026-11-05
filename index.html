@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123c32">
+  <title>mybudget — Make your money feel clear</title>
+  <style>
+    :root {
+      --ink: #14332c;
+      --muted: #71817b;
+      --line: #e7ece9;
+      --surface: #fff;
+      --canvas: #f7faf8;
+      --green: #123c32;
+      --green-2: #2f8063;
+      --mint: #dcefe5;
+      --lime: #c9ef9a;
+      --orange: #e18b4e;
+      --red: #d96862;
+      --shadow: 0 16px 45px rgba(20, 51, 44, .07);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--canvas); font-size: 14px; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; border: 0; }
+    .app { display: flex; min-height: 100vh; }
+    .sidebar { width: 246px; flex: 0 0 246px; background: var(--green); color: #fff; padding: 28px 18px; display: flex; flex-direction: column; }
+    .brand { display: flex; align-items: center; gap: 10px; padding: 0 12px 42px; font-size: 20px; font-weight: 750; letter-spacing: -.04em; }
+    .brand-mark { width: 29px; height: 29px; border-radius: 9px; background: var(--lime); color: var(--green); display: grid; place-items: center; font-weight: 900; }
+    .nav { display: grid; gap: 6px; }
+    .nav button { width: 100%; padding: 12px 13px; border-radius: 10px; color: #a7c3b9; background: transparent; display: flex; align-items: center; gap: 12px; text-align: left; }
+    .nav button:hover, .nav button.active { color: #fff; background: rgba(255,255,255,.1); }
+    .nav svg { width: 18px; height: 18px; opacity: .8; }
+    .sidebar-foot { margin-top: auto; padding: 18px 12px 0; color: #83aa9b; font-size: 12px; line-height: 1.5; }
+    .main { flex: 1; min-width: 0; padding: 36px clamp(22px, 4vw, 58px); max-width: 1500px; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 20px; }
+    .eyebrow { color: var(--green-2); text-transform: uppercase; letter-spacing: .13em; font-weight: 800; font-size: 11px; margin: 0 0 8px; }
+    h1 { font-size: clamp(26px, 3vw, 35px); letter-spacing: -.055em; line-height: 1.1; margin: 0 0 8px; }
+    .subtitle { color: var(--muted); margin: 0; }
+    .period-control { display: flex; align-items: center; gap: 12px; color: var(--muted); white-space: nowrap; }
+    select, input { border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 10px 12px; color: var(--ink); outline: none; }
+    select:focus, input:focus { border-color: var(--green-2); box-shadow: 0 0 0 3px rgba(47,128,99,.13); }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+    .card { background: var(--surface); border: 1px solid rgba(231,236,233,.8); border-radius: 16px; box-shadow: var(--shadow); }
+    .stat { min-height: 139px; padding: 21px; position: relative; overflow: hidden; }
+    .stat:after { content: ""; position: absolute; width: 96px; height: 96px; right: -25px; bottom: -34px; border-radius: 50%; background: var(--mint); opacity: .55; }
+    .stat-label { color: var(--muted); font-size: 12px; font-weight: 700; }
+    .stat-value { display: block; font-size: 27px; letter-spacing: -.04em; margin: 12px 0 9px; }
+    .stat-note { font-size: 12px; color: var(--green-2); font-weight: 650; }
+    .stat-note.negative { color: var(--red); }
+    .section-grid { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr); gap: 18px; margin-top: 20px; }
+    .panel { padding: 22px; }
+    .panel-heading { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 12px; }
+    h2 { font-size: 17px; margin: 0 0 4px; letter-spacing: -.025em; }
+    .helper { color: var(--muted); font-size: 12px; margin: 0; }
+    .view-switch { background: #f0f5f2; border-radius: 8px; padding: 3px; display: flex; gap: 2px; }
+    .view-switch button { background: transparent; padding: 7px 10px; border-radius: 6px; color: var(--muted); font-size: 12px; }
+    .view-switch button.active { background: #fff; color: var(--green); box-shadow: 0 2px 6px rgba(20,51,44,.1); font-weight: 700; }
+    .chart-wrap { height: 230px; position: relative; }
+    .chart-wrap svg { width: 100%; height: 198px; overflow: visible; }
+    .chart-grid line { stroke: #edf2ef; stroke-width: 1; }
+    .chart-labels { display: flex; justify-content: space-between; color: #9aa8a2; font-size: 11px; padding: 3px 4px 0; }
+    .chart-tooltip { position: absolute; right: 12%; top: 18px; background: var(--green); color: white; border-radius: 8px; padding: 7px 10px; font-size: 11px; box-shadow: 0 4px 15px rgba(20,51,44,.2); }
+    .chart-tooltip strong { display: block; font-size: 13px; margin-top: 2px; }
+    .legend { display: flex; gap: 18px; font-size: 11px; color: var(--muted); margin-top: 9px; }
+    .dot { width: 7px; height: 7px; display: inline-block; border-radius: 50%; margin-right: 5px; background: var(--green-2); }
+    .dot.mint { background: var(--lime); }
+    .goal { padding: 15px 0; border-bottom: 1px solid var(--line); }
+    .goal:last-child { border-bottom: 0; padding-bottom: 3px; }
+    .goal-top { display: flex; justify-content: space-between; margin-bottom: 9px; font-size: 13px; }
+    .goal-top span:last-child { color: var(--muted); font-size: 12px; }
+    .progress { height: 7px; background: #edf2ef; border-radius: 99px; overflow: hidden; }
+    .progress i { display: block; height: 100%; background: var(--green-2); border-radius: inherit; }
+    .goal-foot { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 7px; }
+    .quick-actions { display: flex; gap: 9px; margin-top: 18px; }
+    .primary, .secondary { border-radius: 9px; padding: 10px 13px; font-weight: 700; }
+    .primary { color: var(--green); background: var(--lime); }
+    .primary:hover { background: #b7e87d; }
+    .secondary { color: var(--green); border: 1px solid var(--line); background: #fff; }
+    .transactions { margin-top: 20px; }
+    .table-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 580px; }
+    th { text-align: left; color: #9aa8a2; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 750; padding: 0 12px 11px; }
+    td { padding: 13px 12px; border-top: 1px solid #f0f3f1; }
+    td:last-child, th:last-child { text-align: right; }
+    .transaction-name { display: flex; align-items: center; gap: 11px; font-weight: 650; }
+    .transaction-icon { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: #eef7f1; color: var(--green-2); font-size: 14px; }
+    .tag { color: var(--muted); font-size: 11px; background: #f4f6f5; padding: 4px 7px; border-radius: 5px; }
+    .income { color: var(--green-2); font-weight: 750; }
+    .expense { color: var(--red); font-weight: 750; }
+    .empty { color: var(--muted); text-align: center; padding: 30px; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(20,51,44,.34); display: grid; place-items: center; padding: 20px; z-index: 3; }
+    .modal-backdrop[hidden] { display: none; }
+    .modal { width: min(460px, 100%); background: #fff; border-radius: 17px; padding: 25px; box-shadow: 0 25px 70px rgba(20,51,44,.25); }
+    .modal-head { display:flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+    .close { background: #f3f6f4; color: var(--muted); width: 30px; height: 30px; border-radius: 50%; }
+    .form-grid { display: grid; gap: 14px; }
+    .field { display: grid; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 700; }
+    .form-grid .split { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-actions { display:flex; justify-content:flex-end; gap: 9px; padding-top: 7px; }
+    @media (max-width: 1050px) { .sidebar { width: 210px; flex-basis: 210px; } .grid { grid-template-columns: repeat(2, 1fr); } .section-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 680px) { .app { display: block; } .sidebar { width: 100%; padding: 15px 16px; } .brand { padding: 0 5px 15px; } .nav { display:flex; overflow:auto; } .nav button { width:auto; white-space:nowrap; padding: 9px 10px; } .sidebar-foot { display:none; } .main { padding: 25px 16px 35px; } .topbar { display:block; } .period-control { margin-top: 18px; } .grid { gap: 10px; } .stat { padding: 16px; min-height: 125px; } .stat-value { font-size: 22px; } .panel { padding: 17px; } .panel-heading { align-items: flex-start; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">m</span> mybudget</div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Overview</button>
+        <button type="button" data-scroll="transactions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Transactions</button>
+        <button type="button" data-scroll="goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="8"/></svg> Goals</button>
+      </nav>
+      <div class="sidebar-foot">Your finances, in one calm place.<br><br>Data is saved locally in your browser.</div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div><p class="eyebrow">Thursday, November 5, 2026</p><h1>Good afternoon, Alex.</h1><p class="subtitle">Here’s your financial snapshot for this month.</p></div>
+        <div class="period-control"><span>View</span><select id="period"><option value="month">This month</option><option value="quarter">This quarter</option><option value="year">This year</option></select></div>
+      </header>
+      <section class="grid" aria-label="Financial summary">
+        <article class="card stat"><span class="stat-label">Total balance</span><strong class="stat-value" id="balance">$4,280.00</strong><span class="stat-note" id="balanceNote">↑ 8.4% from last month</span></article>
+        <article class="card stat"><span class="stat-label">Income</span><strong class="stat-value" id="income">$5,240.00</strong><span class="stat-note">↑ $320.00 vs last month</span></article>
+        <article class="card stat"><span class="stat-label">Expenses</span><strong class="stat-value" id="expenses">$1,860.00</strong><span class="stat-note" id="expenseNote">↓ 4.2% vs last month</span></article>
+        <article class="card stat"><span class="stat-label">Savings rate</span><strong class="stat-value" id="savingsRate">64.5%</strong><span class="stat-note">↑ 2.8% this month</span></article>
+      </section>
+      <section class="section-grid">
+        <article class="card panel">
+          <div class="panel-heading"><div><h2>Balance overview</h2><p class="helper">Your balance over the last 6 months</p></div><div class="view-switch" role="group" aria-label="Chart view"><button class="active" data-view="graph" type="button">Graph</button><button data-view="table" type="button">Table</button></div></div>
+          <div id="graphView"><div class="chart-wrap"><svg viewBox="0 0 700 190" preserveAspectRatio="none" role="img" aria-label="Balance trend chart"><g class="chart-grid"><line x1="0" x2="700" y1="20" y2="20"/><line x1="0" x2="700" y1="75" y2="75"/><line x1="0" x2="700" y1="130" y2="130"/><line x1="0" x2="700" y1="185" y2="185"/></g><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#73bd91" stop-opacity=".3"/><stop offset="1" stop-color="#73bd91" stop-opacity="0"/></linearGradient></defs><path id="chartArea" d="M0 153 C38 147 62 158 100 130 S160 134 200 118 S263 124 300 94 S365 108 400 80 S463 89 500 68 S565 81 600 49 S660 59 700 28 L700 190 L0 190 Z" fill="url(#area)"/><path id="chartLine" d="M0 153 C38 147 62 158 100 130 S160 134 200 118 S263 124 300 94 S365 108 400 80 S463 89 500 68 S565 81 600 49 S660 59 700 28" fill="none" stroke="#2f8063" stroke-width="3"/><circle id="chartPoint" cx="700" cy="28" r="5" fill="#c9ef9a" stroke="#2f8063" stroke-width="3"/></svg><div class="chart-tooltip">Current balance<strong id="chartBalance">$4,280</strong></div><div class="chart-labels"><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span></div></div><div class="legend"><span><i class="dot"></i>Balance</span><span><i class="dot mint"></i>Projected balance</span></div></div>
+          <div id="tableView" hidden><div class="table-wrap"><table><thead><tr><th>Month</th><th>Income</th><th>Expenses</th><th>Balance</th></tr></thead><tbody><tr><td>June</td><td class="income">$4,900</td><td class="expense">-$1,920</td><td>$3,580</td></tr><tr><td>July</td><td class="income">$5,100</td><td class="expense">-$2,040</td><td>$3,640</td></tr><tr><td>August</td><td class="income">$5,240</td><td class="expense">-$1,980</td><td>$3,860</td></tr><tr><td>September</td><td class="income">$5,240</td><td class="expense">-$1,920</td><td>$4,040</td></tr><tr><td>October</td><td class="income">$5,240</td><td class="expense">-$1,940</td><td>$4,120</td></tr><tr><td>November</td><td class="income">$5,240</td><td class="expense">-$1,860</td><td>$4,280</td></tr></tbody></table></div></div>
+        </article>
+        <article class="card panel" id="goals"><div class="panel-heading"><div><h2>Savings goals</h2><p class="helper">You’re making great progress</p></div><button class="secondary" id="addGoal" type="button" aria-label="Add savings goal">＋</button></div><div class="goal"><div class="goal-top"><strong>Emergency fund</strong><span>$3,200 / $5,000</span></div><div class="progress"><i style="width:64%"></i></div><div class="goal-foot"><span>64% complete</span><span>$1,800 to go</span></div></div><div class="goal"><div class="goal-top"><strong>Summer trip</strong><span>$1,150 / $2,000</span></div><div class="progress"><i style="width:57.5%; background:#82b5a0"></i></div><div class="goal-foot"><span>57% complete</span><span>$850 to go</span></div></div><div class="goal"><div class="goal-top"><strong>New laptop</strong><span>$640 / $1,200</span></div><div class="progress"><i style="width:53%; background:#b3d58c"></i></div><div class="goal-foot"><span>53% complete</span><span>$560 to go</span></div></div><div class="quick-actions"><button class="primary" id="addTransaction" type="button">＋ Add transaction</button><button class="secondary" id="exportData" type="button">Export</button></div></article>
+      </section>
+      <section class="card panel transactions" id="transactions"><div class="panel-heading"><div><h2>Recent transactions</h2><p class="helper">Your latest income and expenses</p></div><button class="secondary" id="addTransaction2" type="button">＋ Add transaction</button></div><div class="table-wrap"><table><thead><tr><th>Description</th><th>Category</th><th>Date</th><th>Amount</th></tr></thead><tbody id="transactionRows"></tbody></table></div></section>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="modal" hidden><form class="modal" id="transactionForm"><div class="modal-head"><div><p class="eyebrow">New entry</p><h2>Add a transaction</h2></div><button class="close" id="closeModal" type="button" aria-label="Close">×</button></div><div class="form-grid"><div class="field">Description<input id="description" required placeholder="e.g. Monthly salary"></div><div class="split"><label class="field">Type<select id="type"><option value="income">Income</option><option value="expense">Expense</option></select></label><label class="field">Amount<input id="amount" required type="number" min="0.01" step="0.01" placeholder="0.00"></label></div><div class="split"><label class="field">Category<select id="category"><option>Salary</option><option>Housing</option><option>Food</option><option>Transport</option><option>Entertainment</option><option>Savings</option><option>Other</option></select></label><label class="field">Frequency<select id="frequency"><option>One-time</option><option>Monthly</option><option>Weekly</option></select></label></div><div class="form-actions"><button class="secondary" id="cancelModal" type="button">Cancel</button><button class="primary" type="submit">Save transaction</button></div></div></form></div>
+  <script>
+    const defaultTransactions = [
+      { description: "Monthly salary", category: "Salary", date: "Nov 01, 2026", amount: 5240, type: "income", frequency: "Monthly" },
+      { description: "Rent & utilities", category: "Housing", date: "Nov 02, 2026", amount: 1250, type: "expense", frequency: "Monthly" },
+      { description: "Grocery run", category: "Food", date: "Nov 03, 2026", amount: 184.50, type: "expense", frequency: "One-time" },
+      { description: "Freelance project", category: "Other", date: "Nov 04, 2026", amount: 320, type: "income", frequency: "One-time" }
+    ];
+    const $ = (id) => document.getElementById(id);
+    let transactions = JSON.parse(localStorage.getItem("mybudget-transactions") || "null") || defaultTransactions;
+    const money = (value) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+    function renderTransactions() {
+      $("transactionRows").innerHTML = transactions.length ? transactions.slice().reverse().map((item) => `<tr><td><div class="transaction-name"><span class="transaction-icon">${item.type === "income" ? "↗" : "↘"}</span>${item.description}</div></td><td><span class="tag">${item.category}</span></td><td>${item.date}</td><td class="${item.type}">${item.type === "income" ? "+" : "-"}${money(item.amount)}</td></tr>`).join("") : '<tr><td colspan="4" class="empty">No transactions yet. Add your first one above.</td></tr>';
+      const income = transactions.filter((x) => x.type === "income").reduce((sum, x) => sum + Number(x.amount), 0);
+      const expenses = transactions.filter((x) => x.type === "expense").reduce((sum, x) => sum + Number(x.amount), 0);
+      const balance = 4280 + (income - 5560) - (expenses - 1434.5);
+      $("income").textContent = money(income || 5240); $("expenses").textContent = money(expenses || 1860);
+      $("balance").textContent = money(balance); $("chartBalance").textContent = money(balance).replace(".00", "");
+      const chartY = Math.max(20, Math.min(175, 28 + (4280 - balance) * 0.02));
+      const lineEnd = `S660 59 700 ${chartY}`;
+      $("chartLine").setAttribute("d", `M0 153 C38 147 62 158 100 130 S160 134 200 118 S263 124 300 94 S365 108 400 80 S463 89 500 68 S565 81 600 49 ${lineEnd}`);
+      $("chartArea").setAttribute("d", `M0 153 C38 147 62 158 100 130 S160 134 200 118 S263 124 300 94 S365 108 400 80 S463 89 500 68 S565 81 600 49 ${lineEnd} L700 190 L0 190 Z`);
+      $("chartPoint").setAttribute("cy", chartY);
+      $("savingsRate").textContent = `${Math.max(0, ((income - expenses) / Math.max(income, 1) * 100)).toFixed(1)}%`;
+    }
+    function openModal() { $("modal").hidden = false; $("description").focus(); }
+    function closeModal() { $("modal").hidden = true; $("transactionForm").reset(); }
+    ["addTransaction", "addTransaction2", "addGoal"].forEach((id) => $(id).addEventListener("click", openModal));
+    $("closeModal").addEventListener("click", closeModal); $("cancelModal").addEventListener("click", closeModal);
+    $("modal").addEventListener("click", (event) => { if (event.target === $("modal")) closeModal(); });
+    $("transactionForm").addEventListener("submit", (event) => { event.preventDefault(); const type = $("type").value; transactions.push({ description: $("description").value.trim(), category: $("category").value, date: new Intl.DateTimeFormat("en-US", { month: "short", day: "2-digit", year: "numeric" }).format(new Date()), amount: Number($("amount").value), type, frequency: $("frequency").value }); localStorage.setItem("mybudget-transactions", JSON.stringify(transactions)); renderTransactions(); closeModal(); });
+    document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => { document.querySelectorAll("[data-view]").forEach((item) => item.classList.remove("active")); button.classList.add("active"); $("graphView").hidden = button.dataset.view !== "graph"; $("tableView").hidden = button.dataset.view !== "table"; }));
+    document.querySelectorAll("[data-scroll]").forEach((button) => button.addEventListener("click", () => $(button.dataset.scroll).scrollIntoView({ behavior: "smooth" })));
+    $("exportData").addEventListener("click", () => { const blob = new Blob([JSON.stringify(transactions, null, 2)], { type: "application/json" }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "mybudget-transactions.json"; link.click(); URL.revokeObjectURL(link.href); });
+    renderTransactions();
+  </script>
+</body>
+</html>
